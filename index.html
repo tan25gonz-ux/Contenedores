@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Cargas 2026</title>
+    <title>Sistema de Cargas 2026 - Colones</title>
     <style>
         :root { 
             --primary: #1a73e8; 
@@ -57,7 +57,7 @@
 
         .empresa-content { 
             display: none; padding: 10px; background: #fafafa; border-top: 1px solid #eee;
-            overflow-x: auto; /* IMPORTANTE: Permite scroll lateral en móvil */
+            overflow-x: auto;
             -webkit-overflow-scrolling: touch;
         }
         .empresa-content.active { display: block; }
@@ -91,12 +91,12 @@
 
     <div class="card">
         <div class="form-grid">
-            <input type="text" id="empresa" placeholder="Empresa (Nombre)">
+            <input type="text" id="empresa" placeholder="Empresa">
             <input type="date" id="fecha">
-            <input type="text" id="material" placeholder="Material (Hierro, Cobre...)">
+            <input type="text" id="material" placeholder="Material">
             <input type="text" id="numContenedor" placeholder="N° Contenedor">
             <input type="number" id="peso" placeholder="Peso (kg)">
-            <input type="number" id="pago" placeholder="Pago ($)">
+            <input type="number" id="pago" placeholder="Pago (₡)">
             <button class="btn-add" onclick="registrar()">+ REGISTRAR CARGA</button>
         </div>
     </div>
@@ -130,13 +130,12 @@
     const db = getFirestore(app);
     let todosLosDatos = [];
 
-    // GUARDAR REGISTRO
     window.registrar = async () => {
         const emp = document.getElementById('empresa').value.trim();
         const fec = document.getElementById('fecha').value;
         const mat = document.getElementById('material').value.trim();
 
-        if(!emp || !fec || !mat) return alert("Completa: Empresa, Fecha y Material");
+        if(!emp || !fec || !mat) return alert("Faltan datos obligatorios");
 
         try {
             await addDoc(collection(db, "contenedores"), {
@@ -148,41 +147,35 @@
                 peso: parseFloat(document.getElementById('peso').value) || 0,
                 pago: parseFloat(document.getElementById('pago').value) || 0
             });
-            // Limpiamos campos de carga pero dejamos empresa y fecha para rapidez
             document.getElementById('numContenedor').value = "";
             document.getElementById('peso').value = "";
             document.getElementById('pago').value = "";
         } catch (e) { alert("Error al guardar"); }
     };
 
-    // ELIMINAR REGISTRO
     window.eliminar = async (e, id) => {
-        e.stopPropagation(); // Evita que se cierre el acordeón al borrar
+        e.stopPropagation();
         if(confirm("¿Eliminar este registro?")) {
             await deleteDoc(doc(db, "contenedores", id));
         }
     };
 
-    // ESCUCHAR CAMBIOS
     onSnapshot(collection(db, "contenedores"), (snap) => {
         todosLosDatos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         renderizar();
     });
 
-    // ABRIR/CERRAR ACORDEÓN
     window.toggle = (id) => {
         const el = document.getElementById(id);
         el.classList.toggle('active');
     };
 
-    // RENDERIZAR VISTA
     window.renderizar = () => {
         const buscador = document.getElementById('buscador').value.toLowerCase();
         const anioSel = document.getElementById('filtroAnio').value;
         const listaDiv = document.getElementById('listaEmpresas');
         listaDiv.innerHTML = "";
 
-        // 1. Agrupar por empresa
         const grupos = todosLosDatos
             .filter(i => i.anio === anioSel && i.empresa.includes(buscador))
             .reduce((acc, item) => {
@@ -191,13 +184,11 @@
                 return acc;
             }, {});
 
-        // 2. Crear Acordeones
         for (const nombreEmpresa in grupos) {
             const filas = grupos[nombreEmpresa];
             const totalPeso = filas.reduce((s, i) => s + i.peso, 0);
             const totalPago = filas.reduce((s, i) => s + i.pago, 0);
 
-            // Desglose por material
             const matObj = filas.reduce((acc, i) => {
                 acc[i.material] = (acc[i.material] || 0) + i.peso;
                 return acc;
@@ -210,10 +201,10 @@
                     <div class="empresa-header" onclick="toggle('${idHtml}')">
                         <div class="empresa-info">
                             <b>${nombreEmpresa}</b>
-                            <span>${filas.length} Cargas</span>
+                            <span>${filas.length} Cargas registradas</span>
                         </div>
                         <div class="empresa-totals">
-                            <b>$${totalPago.toLocaleString()}</b>
+                            <b>₡${totalPago.toLocaleString()}</b>
                             <i>${totalPeso.toLocaleString()} kg</i>
                         </div>
                     </div>
@@ -239,13 +230,13 @@
                                         <td><span class="badge-mat">${f.material}</span></td>
                                         <td>${f.numContenedor}</td>
                                         <td>${f.peso}k</td>
-                                        <td>$${f.pago}</td>
+                                        <td>₡${f.pago.toLocaleString()}</td>
                                         <td><button class="btn-del" onclick="eliminar(event, '${f.id}')">🗑</button></td>
                                     </tr>
                                 `).join('')}
                             </tbody>
                         </table>
-                        <div class="scroll-hint">↔ Desliza la tabla para ver más</div>
+                        <div class="scroll-hint">↔ Desliza para ver la papelera</div>
                     </div>
                 </div>
             `;
