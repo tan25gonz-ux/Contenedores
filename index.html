@@ -3,70 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Agrupada 2026</title>
+    <title>Sistema de Cargas 2026</title>
     <style>
-        :root { --primary: #1a73e8; --bg: #f1f3f4; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; }
+        :root { 
+            --primary: #1a73e8; 
+            --success: #1e8e3e;
+            --danger: #d93025;
+            --bg: #f1f3f4; 
+        }
+
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            background: var(--bg); 
+            margin: 0; 
+            padding: 10px; 
+            padding-bottom: 50px;
+        }
+
         .container { max-width: 900px; margin: auto; }
         
-        /* Formulario Compacto */
-        .form-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 25px; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
-        .btn-add { background: var(--primary); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; grid-column: 1 / -1; }
+        h2 { text-align: center; color: var(--primary); font-size: 1.5rem; margin: 15px 0; }
 
-        /* Estilo de Acordeón por Empresa */
-        .empresa-group { background: white; border-radius: 8px; margin-bottom: 10px; overflow: hidden; border: 1px solid #ddd; }
-        .empresa-header { 
-            background: #fff; padding: 15px 20px; cursor: pointer; display: flex; 
-            justify-content: space-between; align-items: center; border-bottom: 1px solid #eee;
-            transition: background 0.3s;
+        /* Formulario */
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); margin-bottom: 20px; }
+        .form-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
+            gap: 10px; 
         }
-        .empresa-header:hover { background: #f8f9fa; }
-        .empresa-name { font-weight: bold; color: var(--primary); font-size: 1.1em; text-transform: uppercase; }
-        .empresa-summary { color: #5f6368; font-size: 0.9em; }
+        input, select { 
+            padding: 12px; border: 1px solid #dadce0; border-radius: 8px; font-size: 14px; width: 100%; box-sizing: border-box; 
+        }
+        .btn-add { 
+            background: var(--primary); color: white; border: none; padding: 12px; 
+            border-radius: 8px; cursor: pointer; font-weight: bold; grid-column: 1 / -1; 
+        }
 
-        .empresa-content { display: none; padding: 15px; background: #fafafa; }
+        /* Buscador y Filtro */
+        .search-box { display: flex; gap: 10px; margin-bottom: 15px; }
+
+        /* Estilo Acordeón */
+        .empresa-group { background: white; border-radius: 10px; margin-bottom: 10px; border: 1px solid #ddd; overflow: hidden; }
+        .empresa-header { 
+            padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; 
+            background: #fff; transition: 0.2s;
+        }
+        .empresa-header:active { background: #f1f3f4; }
+        .empresa-info b { color: var(--primary); text-transform: uppercase; font-size: 1.1em; display: block; }
+        .empresa-info span { font-size: 0.85em; color: #5f6368; }
+        .empresa-totals { text-align: right; }
+        .empresa-totals b { color: var(--success); display: block; }
+        .empresa-totals i { font-style: normal; font-size: 0.85em; color: #5f6368; }
+
+        .empresa-content { 
+            display: none; padding: 10px; background: #fafafa; border-top: 1px solid #eee;
+            overflow-x: auto; /* IMPORTANTE: Permite scroll lateral en móvil */
+            -webkit-overflow-scrolling: touch;
+        }
         .empresa-content.active { display: block; }
 
-        /* Tabla Interna */
-        table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
-        th { text-align: left; color: #777; padding-bottom: 10px; border-bottom: 2px solid #eee; }
-        td { padding: 10px 5px; border-bottom: 1px solid #eee; }
-        
-        .badge-material { background: #e8f0fe; color: #1967d2; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
-        .btn-del { color: #d93025; background: none; border: none; cursor: pointer; font-size: 1.2em; }
+        .desglose-chips { margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 5px; }
+        .chip { background: #e8f0fe; color: var(--primary); padding: 4px 8px; border-radius: 15px; font-size: 0.75em; font-weight: bold; border: 1px solid #c2e7ff; }
 
-        .desglose-interno { margin-top: 10px; padding: 10px; background: #fff; border-radius: 5px; border: 1px dashed #ccc; }
+        /* Tabla Responsive */
+        table { width: 100%; border-collapse: collapse; min-width: 550px; }
+        th { text-align: left; font-size: 0.75em; color: #70757a; padding: 8px; border-bottom: 2px solid #eee; }
+        td { padding: 10px 8px; border-bottom: 1px solid #eee; font-size: 0.9em; }
+        
+        .badge-mat { background: #f1f3f4; padding: 3px 6px; border-radius: 4px; font-weight: 500; }
+        .btn-del { 
+            background: #fce8e6; color: var(--danger); border: 1px solid #fad2cf; 
+            padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 1em;
+        }
+
+        .scroll-hint { font-size: 10px; color: #999; text-align: center; margin-top: 8px; }
+
+        @media (max-width: 600px) {
+            h2 { font-size: 1.2rem; }
+            .empresa-header { padding: 12px; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🚚 Registro de Cargas 2026</h2>
+    <h2>🚚 Gestión de Contenedores</h2>
 
-    <div class="form-card">
+    <div class="card">
         <div class="form-grid">
-            <input type="text" id="empresa" placeholder="Empresa">
+            <input type="text" id="empresa" placeholder="Empresa (Nombre)">
             <input type="date" id="fecha">
-            <input type="text" id="material" placeholder="Material (Cobre, etc)">
-            <input type="text" id="numContenedor" placeholder="Contenedor #">
+            <input type="text" id="material" placeholder="Material (Hierro, Cobre...)">
+            <input type="text" id="numContenedor" placeholder="N° Contenedor">
             <input type="number" id="peso" placeholder="Peso (kg)">
             <input type="number" id="pago" placeholder="Pago ($)">
-            <button class="btn-add" onclick="registrar()">+ Agregar al Sistema</button>
+            <button class="btn-add" onclick="registrar()">+ REGISTRAR CARGA</button>
         </div>
     </div>
 
-    <div style="margin-bottom: 15px; display: flex; justify-content: flex-end;">
-        <select id="filtroAnio" onchange="renderizar()">
-            <option value="2025">Año 2025</option>
-            <option value="2026" selected>Año 2026</option>
-            <option value="2027">Año 2027</option>
+    <div class="search-box">
+        <input type="text" id="buscador" onkeyup="renderizar()" placeholder="🔍 Buscar empresa..." style="flex: 2;">
+        <select id="filtroAnio" onchange="renderizar()" style="flex: 1;">
+            <option value="2025">2025</option>
+            <option value="2026" selected>2026</option>
+            <option value="2027">2027</option>
         </select>
     </div>
 
     <div id="listaEmpresas"></div>
-
 </div>
 
 <script type="module">
@@ -86,109 +130,125 @@
     const db = getFirestore(app);
     let todosLosDatos = [];
 
+    // GUARDAR REGISTRO
     window.registrar = async () => {
         const emp = document.getElementById('empresa').value.trim();
         const fec = document.getElementById('fecha').value;
-        if(!emp || !fec) return alert("Llena empresa y fecha");
+        const mat = document.getElementById('material').value.trim();
 
-        await addDoc(collection(db, "contenedores"), {
-            empresa: emp.toLowerCase(),
-            fecha: fec,
-            anio: fec.split('-')[0],
-            material: document.getElementById('material').value.toLowerCase().trim(),
-            numContenedor: document.getElementById('numContenedor').value,
-            peso: parseFloat(document.getElementById('peso').value) || 0,
-            pago: parseFloat(document.getElementById('pago').value) || 0
-        });
-        document.getElementById('peso').value = "";
-        document.getElementById('numContenedor').value = "";
+        if(!emp || !fec || !mat) return alert("Completa: Empresa, Fecha y Material");
+
+        try {
+            await addDoc(collection(db, "contenedores"), {
+                empresa: emp.toLowerCase(),
+                fecha: fec,
+                anio: fec.split('-')[0],
+                material: mat.toLowerCase(),
+                numContenedor: document.getElementById('numContenedor').value || "N/A",
+                peso: parseFloat(document.getElementById('peso').value) || 0,
+                pago: parseFloat(document.getElementById('pago').value) || 0
+            });
+            // Limpiamos campos de carga pero dejamos empresa y fecha para rapidez
+            document.getElementById('numContenedor').value = "";
+            document.getElementById('peso').value = "";
+            document.getElementById('pago').value = "";
+        } catch (e) { alert("Error al guardar"); }
     };
 
-    window.eliminar = async (id) => {
-        if(confirm("¿Eliminar registro?")) await deleteDoc(doc(db, "contenedores", id));
+    // ELIMINAR REGISTRO
+    window.eliminar = async (e, id) => {
+        e.stopPropagation(); // Evita que se cierre el acordeón al borrar
+        if(confirm("¿Eliminar este registro?")) {
+            await deleteDoc(doc(db, "contenedores", id));
+        }
     };
 
+    // ESCUCHAR CAMBIOS
     onSnapshot(collection(db, "contenedores"), (snap) => {
         todosLosDatos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         renderizar();
     });
 
-    window.toggleEmpresa = (id) => {
+    // ABRIR/CERRAR ACORDEÓN
+    window.toggle = (id) => {
         const el = document.getElementById(id);
         el.classList.toggle('active');
     };
 
+    // RENDERIZAR VISTA
     window.renderizar = () => {
+        const buscador = document.getElementById('buscador').value.toLowerCase();
         const anioSel = document.getElementById('filtroAnio').value;
-        const contenedorPrincipal = document.getElementById('listaEmpresas');
-        contenedorPrincipal.innerHTML = "";
+        const listaDiv = document.getElementById('listaEmpresas');
+        listaDiv.innerHTML = "";
 
-        // 1. Filtrar por año
-        const filtrados = todosLosDatos.filter(i => i.anio === anioSel);
+        // 1. Agrupar por empresa
+        const grupos = todosLosDatos
+            .filter(i => i.anio === anioSel && i.empresa.includes(buscador))
+            .reduce((acc, item) => {
+                if (!acc[item.empresa]) acc[item.empresa] = [];
+                acc[item.empresa].push(item);
+                return acc;
+            }, {});
 
-        // 2. Agrupar por empresa
-        const grupos = filtrados.reduce((acc, item) => {
-            if (!acc[item.empresa]) acc[item.empresa] = [];
-            acc[item.empresa].push(item);
-            return acc;
-        }, {});
+        // 2. Crear Acordeones
+        for (const nombreEmpresa in grupos) {
+            const filas = grupos[nombreEmpresa];
+            const totalPeso = filas.reduce((s, i) => s + i.peso, 0);
+            const totalPago = filas.reduce((s, i) => s + i.pago, 0);
 
-        // 3. Crear el diseño desplegable
-        for (const empresa in grupos) {
-            const items = grupos[empresa];
-            const totalPeso = items.reduce((s, i) => s + i.peso, 0);
-            const totalPago = items.reduce((s, i) => s + i.pago, 0);
-            
-            // Sacar desglose de materiales para esta empresa
-            const matSub = items.reduce((acc, i) => {
+            // Desglose por material
+            const matObj = filas.reduce((acc, i) => {
                 acc[i.material] = (acc[i.material] || 0) + i.peso;
                 return acc;
             }, {});
 
-            let materialTexto = Object.entries(matSub).map(([m, p]) => `<b>${m}:</b> ${p}kg`).join(" | ");
+            const idHtml = `group-${nombreEmpresa.replace(/\s+/g, '')}`;
 
-            const section = document.createElement('div');
-            section.className = 'empresa-group';
-            section.innerHTML = `
-                <div class="empresa-header" onclick="toggleEmpresa('content-${empresa.replace(/\s+/g, '')}')">
-                    <div>
-                        <div class="empresa-name">${empresa}</div>
-                        <div class="empresa-summary">${items.length} Contenedores registrados</div>
+            listaDiv.innerHTML += `
+                <div class="empresa-group">
+                    <div class="empresa-header" onclick="toggle('${idHtml}')">
+                        <div class="empresa-info">
+                            <b>${nombreEmpresa}</b>
+                            <span>${filas.length} Cargas</span>
+                        </div>
+                        <div class="empresa-totals">
+                            <b>$${totalPago.toLocaleString()}</b>
+                            <i>${totalPeso.toLocaleString()} kg</i>
+                        </div>
                     </div>
-                    <div style="text-align:right">
-                        <div style="font-weight:bold; color:#28a745">$${totalPago.toLocaleString()}</div>
-                        <div style="font-size:0.85em">${totalPeso.toLocaleString()} kg total</div>
-                    </div>
-                </div>
-                <div id="content-${empresa.replace(/\s+/g, '')}" class="empresa-content">
-                    <div class="desglose-interno">📊 <b>Resumen Materiales:</b> ${materialTexto}</div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Material</th>
-                                <th>Contenedor</th>
-                                <th>Peso</th>
-                                <th>Pago</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${items.map(i => `
+                    <div id="${idHtml}" class="empresa-content">
+                        <div class="desglose-chips">
+                            ${Object.entries(matObj).map(([m, p]) => `<span class="chip">${m.toUpperCase()}: ${p}kg</span>`).join('')}
+                        </div>
+                        <table>
+                            <thead>
                                 <tr>
-                                    <td>${i.fecha}</td>
-                                    <td><span class="badge-material">${i.material}</span></td>
-                                    <td>${i.numContenedor}</td>
-                                    <td>${i.peso} kg</td>
-                                    <td>$${i.pago}</td>
-                                    <td><button class="btn-del" onclick="event.stopPropagation(); eliminar('${i.id}')">🗑</button></td>
+                                    <th>Fecha</th>
+                                    <th>Material</th>
+                                    <th>Contenedor</th>
+                                    <th>Peso</th>
+                                    <th>Pago</th>
+                                    <th></th>
                                 </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                ${filas.map(f => `
+                                    <tr>
+                                        <td>${f.fecha}</td>
+                                        <td><span class="badge-mat">${f.material}</span></td>
+                                        <td>${f.numContenedor}</td>
+                                        <td>${f.peso}k</td>
+                                        <td>$${f.pago}</td>
+                                        <td><button class="btn-del" onclick="eliminar(event, '${f.id}')">🗑</button></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        <div class="scroll-hint">↔ Desliza la tabla para ver más</div>
+                    </div>
                 </div>
             `;
-            contenedorPrincipal.appendChild(section);
         }
     };
 </script>
