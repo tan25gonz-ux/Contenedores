@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión Agrupada 2026</title>
+    <style>
+        :root { --primary: #1a73e8; --bg: #f1f3f4; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: auto; }
+        
+        /* Formulario Compacto */
+        .form-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 25px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
+        .btn-add { background: var(--primary); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; grid-column: 1 / -1; }
+
+        /* Estilo de Acordeón por Empresa */
+        .empresa-group { background: white; border-radius: 8px; margin-bottom: 10px; overflow: hidden; border: 1px solid #ddd; }
+        .empresa-header { 
+            background: #fff; padding: 15px 20px; cursor: pointer; display: flex; 
+            justify-content: space-between; align-items: center; border-bottom: 1px solid #eee;
+            transition: background 0.3s;
+        }
+        .empresa-header:hover { background: #f8f9fa; }
+        .empresa-name { font-weight: bold; color: var(--primary); font-size: 1.1em; text-transform: uppercase; }
+        .empresa-summary { color: #5f6368; font-size: 0.9em; }
+
+        .empresa-content { display: none; padding: 15px; background: #fafafa; }
+        .empresa-content.active { display: block; }
+
+        /* Tabla Interna */
+        table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        th { text-align: left; color: #777; padding-bottom: 10px; border-bottom: 2px solid #eee; }
+        td { padding: 10px 5px; border-bottom: 1px solid #eee; }
+        
+        .badge-material { background: #e8f0fe; color: #1967d2; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
+        .btn-del { color: #d93025; background: none; border: none; cursor: pointer; font-size: 1.2em; }
+
+        .desglose-interno { margin-top: 10px; padding: 10px; background: #fff; border-radius: 5px; border: 1px dashed #ccc; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🚚 Registro de Cargas 2026</h2>
+
+    <div class="form-card">
+        <div class="form-grid">
+            <input type="text" id="empresa" placeholder="Empresa">
+            <input type="date" id="fecha">
+            <input type="text" id="material" placeholder="Material (Cobre, etc)">
+            <input type="text" id="numContenedor" placeholder="Contenedor #">
+            <input type="number" id="peso" placeholder="Peso (kg)">
+            <input type="number" id="pago" placeholder="Pago ($)">
+            <button class="btn-add" onclick="registrar()">+ Agregar al Sistema</button>
+        </div>
+    </div>
+
+    <div style="margin-bottom: 15px; display: flex; justify-content: flex-end;">
+        <select id="filtroAnio" onchange="renderizar()">
+            <option value="2025">Año 2025</option>
+            <option value="2026" selected>Año 2026</option>
+            <option value="2027">Año 2027</option>
+        </select>
+    </div>
+
+    <div id="listaEmpresas"></div>
+
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAHZnxZp4g4Ral7ZeFRaXPrYKkAEoCWLO0",
+        authDomain: "segundosistema-76ed2.firebaseapp.com",
+        projectId: "segundosistema-76ed2",
+        storageBucket: "segundosistema-76ed2.firebasestorage.app",
+        messagingSenderId: "523761658370",
+        appId: "1:523761658370:web:0a82927b8be1d479b4951b"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    let todosLosDatos = [];
+
+    window.registrar = async () => {
+        const emp = document.getElementById('empresa').value.trim();
+        const fec = document.getElementById('fecha').value;
+        if(!emp || !fec) return alert("Llena empresa y fecha");
+
+        await addDoc(collection(db, "contenedores"), {
+            empresa: emp.toLowerCase(),
+            fecha: fec,
+            anio: fec.split('-')[0],
+            material: document.getElementById('material').value.toLowerCase().trim(),
+            numContenedor: document.getElementById('numContenedor').value,
+            peso: parseFloat(document.getElementById('peso').value) || 0,
+            pago: parseFloat(document.getElementById('pago').value) || 0
+        });
+        document.getElementById('peso').value = "";
+        document.getElementById('numContenedor').value = "";
+    };
+
+    window.eliminar = async (id) => {
+        if(confirm("¿Eliminar registro?")) await deleteDoc(doc(db, "contenedores", id));
+    };
+
+    onSnapshot(collection(db, "contenedores"), (snap) => {
+        todosLosDatos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderizar();
+    });
+
+    window.toggleEmpresa = (id) => {
+        const el = document.getElementById(id);
+        el.classList.toggle('active');
+    };
+
+    window.renderizar = () => {
+        const anioSel = document.getElementById('filtroAnio').value;
+        const contenedorPrincipal = document.getElementById('listaEmpresas');
+        contenedorPrincipal.innerHTML = "";
+
+        // 1. Filtrar por año
+        const filtrados = todosLosDatos.filter(i => i.anio === anioSel);
+
+        // 2. Agrupar por empresa
+        const grupos = filtrados.reduce((acc, item) => {
+            if (!acc[item.empresa]) acc[item.empresa] = [];
+            acc[item.empresa].push(item);
+            return acc;
+        }, {});
+
+        // 3. Crear el diseño desplegable
+        for (const empresa in grupos) {
+            const items = grupos[empresa];
+            const totalPeso = items.reduce((s, i) => s + i.peso, 0);
+            const totalPago = items.reduce((s, i) => s + i.pago, 0);
+            
+            // Sacar desglose de materiales para esta empresa
+            const matSub = items.reduce((acc, i) => {
+                acc[i.material] = (acc[i.material] || 0) + i.peso;
+                return acc;
+            }, {});
+
+            let materialTexto = Object.entries(matSub).map(([m, p]) => `<b>${m}:</b> ${p}kg`).join(" | ");
+
+            const section = document.createElement('div');
+            section.className = 'empresa-group';
+            section.innerHTML = `
+                <div class="empresa-header" onclick="toggleEmpresa('content-${empresa.replace(/\s+/g, '')}')">
+                    <div>
+                        <div class="empresa-name">${empresa}</div>
+                        <div class="empresa-summary">${items.length} Contenedores registrados</div>
+                    </div>
+                    <div style="text-align:right">
+                        <div style="font-weight:bold; color:#28a745">$${totalPago.toLocaleString()}</div>
+                        <div style="font-size:0.85em">${totalPeso.toLocaleString()} kg total</div>
+                    </div>
+                </div>
+                <div id="content-${empresa.replace(/\s+/g, '')}" class="empresa-content">
+                    <div class="desglose-interno">📊 <b>Resumen Materiales:</b> ${materialTexto}</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Material</th>
+                                <th>Contenedor</th>
+                                <th>Peso</th>
+                                <th>Pago</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${items.map(i => `
+                                <tr>
+                                    <td>${i.fecha}</td>
+                                    <td><span class="badge-material">${i.material}</span></td>
+                                    <td>${i.numContenedor}</td>
+                                    <td>${i.peso} kg</td>
+                                    <td>$${i.pago}</td>
+                                    <td><button class="btn-del" onclick="event.stopPropagation(); eliminar('${i.id}')">🗑</button></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            contenedorPrincipal.appendChild(section);
+        }
+    };
+</script>
+</body>
+</html>
